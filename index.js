@@ -5,6 +5,7 @@ const routes = require('./router/friends.js')
 
 let users = []
 
+// To check if the username exists in the list of registered users.
 const doesExist = (username)=>{
   let userswithsamename = users.filter((user)=>{
     return user.username === username
@@ -16,6 +17,7 @@ const doesExist = (username)=>{
   }
 }
 
+// Checking if the username and password match what you have in the list of registered users.
 const authenticatedUser = (username,password)=>{
   let validusers = users.filter((user)=>{
     return (user.username === username && user.password === password)
@@ -29,10 +31,14 @@ const authenticatedUser = (username,password)=>{
 
 const app = express();
 
+// Session object with user-defined secret, as a middleware to intercept
+// the requests and ensure that the session is valid before processing the request.
 app.use(session({secret:"fingerpint"},resave=true,saveUninitialized=true));
 
 app.use(express.json());
 
+// All operation restricted to authenticated users.
+// All enpoints starting /friends go through middleware.
 app.use("/friends", function auth(req,res,next){
    if(req.session.authorization) {
        token = req.session.authorization['accessToken'];
@@ -50,6 +56,7 @@ app.use("/friends", function auth(req,res,next){
     }
 });
 
+// Login endpoint
 app.post("/login", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
@@ -61,7 +68,7 @@ app.post("/login", (req,res) => {
   if (authenticatedUser(username,password)) {
     let accessToken = jwt.sign({
       data: password
-    }, 'access', { expiresIn: 60 * 60 });
+    }, 'access', { expiresIn: 60 * 60 }); // Access token valid for 1 hour (60x60seconds)
 
     req.session.authorization = {
       accessToken,username
@@ -72,6 +79,7 @@ app.post("/login", (req,res) => {
   }
 });
 
+// POST request endpoint for registration that accepts username and password.
 app.post("/register", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
